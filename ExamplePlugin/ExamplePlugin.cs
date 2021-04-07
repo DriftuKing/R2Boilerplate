@@ -1,4 +1,4 @@
-﻿using BepInEx;
+using BepInEx;
 using R2API;
 using R2API.Utils;
 using RoR2;
@@ -6,9 +6,6 @@ using UnityEngine;
 
 namespace ExamplePlugin
 {
-    //This is an example plugin that can be put in BepInEx/plugins/ExamplePlugin/ExamplePlugin.dll to test out.
-    //It's a small plugin that adds a relatively simple item to the game, and gives you that item whenever you press F2.
-
     //This attribute specifies that we have a dependency on R2API, as we're using it to add our item to the game.
     //You don't need this if you're not using R2API in your plugin, it's just to tell BepInEx to initialize R2API before this plugin so it's safe to use R2API.
     [BepInDependency("com.bepis.r2api")]
