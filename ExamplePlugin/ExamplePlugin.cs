@@ -1,6 +1,7 @@
 using BepInEx;
 using On.RoR2;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace ExamplePlugin
 {
@@ -8,31 +9,102 @@ namespace ExamplePlugin
 
     public class ExamplePlugin : BaseUnityPlugin
     {
-        private bool isBuffApplied = false;
         private readonly List<string> survivors = new List<string> { "Acrid", "Artificer", "Bandit", "Captain", "Commando", "Engineer", "Huntress", "Loader", "Mercenary", "MUL-T", "REX" };
+        RoR2.CharacterBody player;
+        int multiplierVal = 1;
 
         public void Awake()
         {
-            GlobalEventManager.OnCharacterHitGround += LevelUpStatsModifier;
+            CharacterBody.Awake += CharacterBody_Awake;
         }
 
-        private void LevelUpStatsModifier(GlobalEventManager.orig_OnCharacterHitGround orig, RoR2.GlobalEventManager self, RoR2.CharacterBody characterBody, UnityEngine.Vector3 impactVelocity)
+        private void CharacterBody_Awake(CharacterBody.orig_Awake orig, RoR2.CharacterBody self)
         {
-            // Check if the character is a survivor. Without this, the buff is applied to every single entity.
-            // Checking if the buff is applied is not needed right now, but if playing with bonus stats it prevents the stats from increasing non-stop.
-            if (!isBuffApplied && survivors.IndexOf(characterBody.GetDisplayName()) != -1) 
+            if (survivors.IndexOf(self.GetDisplayName()) != -1)
             {
-                characterBody.baseAttackSpeed = 30f;
-                characterBody.baseCrit = 100f;
-                characterBody.baseDamage = 10f;
-                isBuffApplied = true;
+                player = self;
             }
-            orig(self, characterBody, impactVelocity);
+            orig(self);
         }
 
         public void Update()
         {
-            
+            if (Input.GetKeyDown(KeyCode.Alpha1))
+            {
+                IncreaseStat(ref player.baseAttackSpeed, 0.25f, "Attack speed");
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha2))
+            {
+                IncreaseStat(ref player.baseDamage, 5f, "Damage");
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha3))
+            {
+                IncreaseStat(ref player.baseCrit, 10f, "Crit chance");
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha4))
+            {
+                IncreaseStat(ref player.baseMoveSpeed, 3f, "Movement speed");
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha5))
+            {
+                IncreaseStat(ref player.baseArmor, 10f, "Armor");
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha6))
+            {
+                IncreaseStat(ref player.baseJumpPower, 2f, "Jump power");
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha7))
+            {
+                IncreaseStat(ref player.baseJumpCount, 1, "Jump count");
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha8))
+            {
+                IncreaseStat(ref player.baseMaxHealth, 50f, "Max health");
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha9))
+            {
+                IncreaseStat(ref player.baseMaxShield, 50f, "Max shield");
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha0))
+            {
+                ChangeOperationType();
+            }
+        }
+
+        private void IncreaseStat(ref float baseValue, float value, string stat)
+        {
+            baseValue += value * multiplierVal;
+            if (baseValue < 1f)
+            {
+                baseValue = 1f;
+            }
+            RoR2.Chat.AddMessage(stat + " changed to <color=#85C1E9>" + baseValue + ".</color>");
+        }
+
+        private void IncreaseStat(ref int baseValue, int value, string stat)
+        {
+            baseValue += value * multiplierVal;
+            if (baseValue < 1)
+            {
+                baseValue = 1;
+            }
+            RoR2.Chat.AddMessage(stat + " changed to <color=#85C1E9>" + baseValue + ".</color>");
+        }
+
+        public void ChangeOperationType()
+        {
+            string multiplierType;
+            if (multiplierVal == 1)
+            {
+                multiplierVal = -1;
+                multiplierType = "decrease";
+            }
+            else
+            {
+                multiplierVal = 1;
+                multiplierType = "increase";
+            }
+            RoR2.Chat.AddMessage("Stats will now <color=#48C9B0>" + multiplierType + "</color>.");
         }
     }
 }
