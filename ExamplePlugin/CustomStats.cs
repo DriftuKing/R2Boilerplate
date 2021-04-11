@@ -1,22 +1,22 @@
 using BepInEx;
 using On.RoR2;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace CustomStats
 {
-    [BepInPlugin("com.Dual.CustomStats", "CustomStats", "1.0.0")]
+    [BepInPlugin("com.Dual.CustomStats", "CustomStats", "1.0.3")]
 
     public class CustomStats : BaseUnityPlugin
     {
-        private readonly List<string> survivors = new List<string> { "Acrid", "Artificer", "Bandit", "Captain", "Commando", "Engineer", "Huntress", "Loader", "Mercenary", "MUL-T", "REX" };
         RoR2.CharacterBody player;
-        float defaultBaseAttackSpeed, defaultBaseDamage, defaultBaseCrit, defaultBaseMoveSpeed, defaultBaseJumpPower, defaultBaseMaxHealth, defaultBaseMaxShield;
-        int multiplierVal, defaultBaseJumpCount;
+        CharacterStats defaultCharacter;
+        CharacterStats customCharacter;
+        int multiplierVal;
+        string user;
 
         private void CharacterBody_Start(CharacterBody.orig_Start orig, RoR2.CharacterBody self)
         {
-            if (survivors.IndexOf(self.GetDisplayName()) != -1)
+            if (user == self.GetUserName())
             {
                 player = self;
                 InitializeDefaultValues(self);
@@ -26,27 +26,20 @@ namespace CustomStats
 
         public void InitializeDefaultValues(RoR2.CharacterBody self)
         {
-            defaultBaseAttackSpeed = self.baseAttackSpeed;
-            defaultBaseDamage = self.baseDamage;
-            defaultBaseCrit = self.baseCrit;
-            defaultBaseMoveSpeed = self.baseMoveSpeed;
-            defaultBaseJumpPower = self.baseJumpPower;
-            defaultBaseMaxHealth = self.baseMaxHealth;
-            defaultBaseMaxShield = self.baseMaxShield;
-            defaultBaseJumpCount = self.baseJumpCount;
+            defaultCharacter = new CharacterStats(self.baseAttackSpeed, self.baseDamage, self.baseCrit, self.baseMoveSpeed, self.baseJumpPower, self.baseMaxHealth, self.baseMaxShield, self.baseJumpCount);
         }
 
         private void ResetStats(ref RoR2.CharacterBody player)
         {
-            player.baseAttackSpeed = defaultBaseAttackSpeed;
-            player.baseDamage = defaultBaseDamage;
-            player.baseCrit = defaultBaseCrit;
-            player.baseMoveSpeed = defaultBaseMoveSpeed;
-            player.baseJumpPower = defaultBaseJumpPower;
-            player.baseJumpCount = defaultBaseJumpCount;
-            player.baseMaxHealth = defaultBaseMaxHealth;
-            player.baseMaxShield = defaultBaseMaxShield;
-            RoR2.Chat.AddMessage("Stats have been <color=#48C9B0>reset</color>.");
+            player.baseAttackSpeed = defaultCharacter.attackSpeed;
+            player.baseDamage = defaultCharacter.damage;
+            player.baseCrit = defaultCharacter.crit;
+            player.baseMoveSpeed = defaultCharacter.moveSpeed;
+            player.baseJumpPower = defaultCharacter.jumpPower;
+            player.baseJumpCount = defaultCharacter.jumpCount;
+            player.baseMaxHealth = defaultCharacter.maxHealth;
+            player.baseMaxShield = defaultCharacter.maxShield;
+            RoR2.Chat.AddMessage(user + "s stats have been <color=#48C9B0>reset</color>.");
         }
 
         private void IncreaseStat(ref float baseValue, float value, string stat)
@@ -56,7 +49,7 @@ namespace CustomStats
             {
                 baseValue = 1f;
             }
-            RoR2.Chat.AddMessage(stat + " changed to <color=#85C1E9>" + baseValue + "</color>.");
+            RoR2.Chat.AddMessage(user + "s " + stat + " changed to <color=#85C1E9>" + baseValue + "</color>.");
         }
 
         private void IncreaseStat(ref int baseValue, int value, string stat)
@@ -66,7 +59,7 @@ namespace CustomStats
             {
                 baseValue = 1;
             }
-            RoR2.Chat.AddMessage(stat + " changed to <color=#85C1E9>" + baseValue + "</color>.");
+            RoR2.Chat.AddMessage(user + "s " + stat + " changed to <color=#85C1E9>" + baseValue + "</color>.");
         }
 
         public void ChangeOperationType()
@@ -88,14 +81,22 @@ namespace CustomStats
         public void Awake()
         {
             CharacterBody.Start += CharacterBody_Start;
+            UserProfile.OnLogin += UserProfile_OnLogin;
             multiplierVal = 1;
+        }
+
+        private void UserProfile_OnLogin(UserProfile.orig_OnLogin orig, RoR2.UserProfile self)
+        {
+            user = self.name;
+            UserProfile.OnLogin -= UserProfile_OnLogin;
+            orig(self);
         }
 
         public void Update()
         {
             if (Input.GetKeyDown(KeyCode.Alpha1))
             {
-                IncreaseStat(ref player.baseAttackSpeed, 0.25f, "Attack speed");
+                IncreaseStat(ref player.baseAttackSpeed, 0.5f, "Attack speed");
             }
             else if (Input.GetKeyDown(KeyCode.Alpha2))
             {
@@ -133,6 +134,24 @@ namespace CustomStats
             {
                 ChangeOperationType();
             }
+        }
+    }
+
+    public class CharacterStats
+    {
+        public float attackSpeed, damage, crit, moveSpeed, jumpPower, maxHealth, maxShield;
+        public int jumpCount;
+        
+        public CharacterStats(float attackSpeed, float damage, float crit, float moveSpeed, float jumpPower, float maxHealth, float maxShield, int jumpCount)
+        {
+            this.attackSpeed = attackSpeed;
+            this.damage = damage;
+            this.crit = crit;
+            this.moveSpeed = moveSpeed;
+            this.jumpPower = jumpPower;
+            this.maxHealth = maxHealth;
+            this.maxShield = maxShield;
+            this.jumpCount = jumpCount;
         }
     }
 }
